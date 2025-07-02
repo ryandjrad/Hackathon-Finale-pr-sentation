@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Dashboard de surveillance Honeypot - Détection et analyse des cybermenaces en temps réel">
+    <title>🛡️ Honeypot Security Dashboard</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Styles intégrés -->
+    <style>
+        /* ===== VARIABLES CSS ===== */
+        :root {
+            /* Couleurs principales */
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151a3a;
+            --bg-card: #1a1f4a;
+            --bg-hover: rgba(0, 212, 255, 0.05);
+            
+            /* Texte */
+            --text-primary: #e4e8ff;
+            --text-secondary: #a8b2d1;
+            --text-muted: #64748b;
+            
+            /* Accents */
+            --accent-primary: #00d4ff;
+            --accent-secondary: #ff006e;
+            --accent-tertiary: #667eea;
+            
+            /* États */
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --danger: #ff0040;
+            --info: #00d4ff;
+            
+            /* Bordures */
+            --border-color: rgba(0, 212, 255, 0.2);
+            --border-hover: rgba(0, 212, 255, 0.4);
+            
+            /* Ombres */
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 5px 20px rgba(0, 212, 255, 0.1);
+            --shadow-lg: 0 10px 40px rgba(0, 212, 255, 0.2);
+            
+            /* Espacement */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            
+            /* Border radius */
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-full: 9999px;
+            
+            /* Transitions */
+            --transition-fast: 150ms ease;
+            --transition-base: 300ms ease;
+            --transition-slow: 500ms ease;
+        }
+
+        /* ===== RESET & BASE ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* ===== LAYOUT ===== */
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-lg);
+        }
+
+        .main {
+            padding: var(--spacing-xl) 0;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(10px);
+            background: rgba(21, 26, 58, 0.8);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-md) 0;
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .header-brand i {
+            font-size: 2rem;
+            color: var(--accent-primary);
+        }
+
+        .header-brand h1 {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-lg);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        /* ===== CLOCK WIDGET ===== */
+        .clock-widget {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .clock-widget:hover {
+            background: rgba(0, 212, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .clock-main {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+        }
+
+        .clock-time {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-primary);
+            letter-spacing: 1px;
+            transition: opacity 0.2s ease;
+        }
+
+        .clock-timezone {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        .clock-date {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* ===== CONNECTION STATUS ===== */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            transition: all var(--transition-base);
+        }
+
+        .connection-status i {
+            font-size: 0.5rem;
+        }
+
+        .connection-status.online {
+            color: var(--success);
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .connection-status.offline {
+            color: var(--danger);
+            background: rgba(255, 0, 64, 0.1);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--accent-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        .btn-icon {
+            padding: var(--spacing-sm);
+            border-radius: var(--radius-full);
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--accent-secondary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-sm {
+            padding: var(--spacing-xs) var(--spacing-md);
+            font-size: 0.8125rem;
+        }
+
+        /* ===== STATS CARDS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            position: relative;
+            overflow: hidden;
+            transition: all var(--transition-base);
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform var(--transition-base);
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: var(--spacing-sm);
+            opacity: 0.8;
+            color: var(--accent-primary);
+        }
+
+        .stat-content h3 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: var(--spacing-xs);
+            background: linear-gradient(135deg, var(--accent-primary), var(--text-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-trend {
+            position: absolute;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
+            font-size: 0.875rem;
+        }
+
+        .trend-up {
+            color: var(--danger);
+        }
+
+        .trend-down {
+            color: var(--success);
+        }
+
+        .trend-neutral {
+            color: var(--text-secondary);
+        }
+
+        /* ===== CHARTS ===== */
+        .charts-section {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            transition: all var(--transition-base);
+        }
+
+        .chart-card:hover {
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .card-header h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-top: var(--spacing-md);
+        }
+
+        /* ===== LIVE FEED ===== */
+        .data-section {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .feed-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .feed-card-large {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feed-container-large {
+            max-height: 600px;
+            height: 400px;
+            overflow-y: auto;
+            padding: var(--spacing-md);
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-xs) var(--spacing-md);
+            background: rgba(255, 0, 64, 0.1);
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--danger);
+        }
+
+        .pulse {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--danger);
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 0.5;
+            }
+        }
+
+        /* Animation pour nouvelles entrées */
+        .feed-item.new {
+            animation: slideIn 0.5s ease, highlightNew 2s ease !important;
+            border-left: 3px solid var(--accent-primary) !important;
+        }
+
+        @keyframes highlightNew {
+            0% {
+                background: rgba(0, 212, 255, 0.2);
+                box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+            }
+            100% {
+                background: rgba(255, 255, 255, 0.02);
+                box-shadow: none;
+            }
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: var(--spacing-lg) 0;
+            text-align: center;
+            color: var(--text-secondary);
+            margin-top: auto;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: var(--radius-sm);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-secondary);
+        }
+
+        /* ===== FEED ITEMS ===== */
+        .feed-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .feed-item:hover {
+            background: rgba(0, 212, 255, 0.05);
+            border-color: rgba(0, 212, 255, 0.2);
+        }
+
+        .feed-item.critical {
+            border-left: 3px solid var(--danger);
+            background: rgba(255, 0, 64, 0.05);
+        }
+
+        .feed-item-time {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            min-width: 80px;
+        }
+
+        .feed-item-ip {
+            font-weight: 600;
+            color: var(--text-primary);
+            min-width: 120px;
+        }
+
+        .feed-item-service {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .feed-item-attack {
+            flex: 1;
+            color: var(--text-secondary);
+        }
+
+        .risk-score {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            min-width: 50px;
+        }
+
+        /* ===== NOTIFICATIONS ===== */
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            max-width: 400px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification h4 {
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .notification p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .header-nav {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .feed-container-large {
+                height: 300px;
+            }
+        }
+
+        /* ===== THEME LIGHT (basique) ===== */
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --accent-primary: #0069d9;
+            --accent-secondary: #e91e63;
+            --border-color: #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    <h1>Honeypot Security</h1>
+                </div>
+                
+                <nav class="header-nav">
+                    <!-- Clock Component -->
+                    <div id="clock-container" class="clock-widget">
+                        <div class="clock-main">
+                            <div class="clock-time" id="clock-time">--:--:--</div>
+                            <div class="clock-timezone">Paris (UTC+02:00)</div>
+                        </div>
+                        <div class="clock-date" id="clock-date">-- --- ----</div>
+                    </div>
+                    
+                    <!-- Connection Status -->
+                    <div id="connection-status" class="connection-status online">
+                        <i class="fas fa-circle"></i>
+                        <span>Connecté</span>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="header-actions">
+                        <button id="toggle-sound" class="btn btn-icon" title="Son">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                        <button id="toggle-theme" class="btn btn-icon" title="Thème">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                        <button id="export-data" class="btn btn-icon" title="Exporter">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button id="toggle-fullscreen" class="btn btn-icon" title="Plein écran">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <button id="refresh-data" class="btn btn-icon btn-primary" title="Actualiser">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Stats Cards -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Total Menaces</h3>
+                        <p class="stat-value" id="total-threats">0</p>
+                        <span class="stat-trend trend-up">
+                            <i class="fas fa-arrow-up"></i> +12%
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-secret"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Attaquants Uniques</h3>
+                        <p class="stat-value" id="unique-attackers">0</p>
+                        <span class="stat-trend trend-up">
+                            <i class="fas fa-arrow-up"></i> +8%
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Score de Risque Moyen</h3>
+                        <p class="stat-value" id="avg-risk-score">0.0</p>
+                        <span class="stat-trend trend-neutral">
+                            <i class="fas fa-minus"></i> Stable
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Service le Plus Ciblé</h3>
+                        <p class="stat-value" id="most-targeted">-</p>
+                        <span class="stat-trend">
+                            <i class="fas fa-info-circle"></i> Info
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Timeline Chart -->
+            <section class="charts-section">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>Timeline des Attaques (24h)</h3>
+                        <div class="chart-controls">
+                            <button class="btn btn-sm" id="refresh-chart">Actualiser</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="timeline-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Live Feed -->
+            <section class="data-section">
+                <div class="feed-card feed-card-large">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fas fa-rss"></i>
+                            Feed en Temps Réel ( Heure en Temps UTC)
+                        </h3>
+                        <span class="live-indicator">
+                            <span class="pulse"></span>
+                            LIVE
+                        </span>
+                    </div>
+                    <div id="live-feed-container" class="feed-container feed-container-large">
+                        <div style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                            En attente de données...
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Honeypot Security. Développé avec ❤️ pour l'ESTIAM</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript intégré -->
+    <script>
+        // Configuration
+        const CONFIG = {
+            API_URL: window.location.hostname === 'localhost' 
+                ? 'http://localhost:5000' 
+                : `${window.location.protocol}//${window.location.hostname}:5000`,
+            UPDATE_INTERVAL: 5000,
+            CLOCK_UPDATE_INTERVAL: 1000,
+            MAX_FEED_ITEMS: 20
+        };
+
+        // État global
+        let timelineChart = null;
+        let lastThreatCount = 0;
+        let soundEnabled = true;
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Dashboard Honeypot démarrage...');
+            initClock();
+            initChart();
+            loadData();
+            setInterval(loadData, CONFIG.UPDATE_INTERVAL);
+            attachEventListeners();
+        });
+
+        // Horloge avec timezone Paris
+        function initClock() {
+            updateClock();
+            setInterval(updateClock, CONFIG.CLOCK_UPDATE_INTERVAL);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const timeEl = document.getElementById('clock-time');
+            const dateEl = document.getElementById('clock-date');
+            const timezoneEl = document.querySelector('.clock-timezone');
+            
+            // Options pour forcer le timezone Paris
+            const timeOptions = {
+                timeZone: 'Europe/Paris',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            };
+            
+            const dateOptions = {
+                timeZone: 'Europe/Paris',
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            };
+            
+            if (timeEl) {
+                timeEl.textContent = now.toLocaleTimeString('fr-FR', timeOptions);
+            }
+            
+            if (dateEl) {
+                dateEl.textContent = now.toLocaleDateString('fr-FR', dateOptions);
+            }
+            
+            // Déterminer UTC+1 ou UTC+2
+            if (timezoneEl) {
+                const formatter = new Intl.DateTimeFormat('fr-FR', {
+                    timeZone: 'Europe/Paris',
+                    timeZoneName: 'short'
+                });
+                const parts = formatter.formatToParts(now);
+                const timezoneName = parts.find(part => part.type === 'timeZoneName')?.value || '';
+                const offset = timezoneName.includes('CEST') || timezoneName.includes('été') ? '+02:00' : '+01:00';
+                timezoneEl.textContent = `Paris (UTC${offset})`;
+            }
+        }
+
+        // Graphique
+        function initChart() {
+            const ctx = document.getElementById('timeline-chart');
+            if (!ctx) return;
+
+            timelineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Attaques',
+                        data: [],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            cornerRadius: 8,
+                            titleFont: {
+                                size: 14,
+                                weight: 'normal'
+                            },
+                            bodyFont: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            displayColors: false,
+                            callbacks: {
+                                label: (context) => {
+                                    return `${context.parsed.y} attaques`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 8
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.05)'
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                stepSize: 1,
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Chargement des données
+        async function loadData() {
+            try {
+                // Stats
+                const statsResponse = await fetch(`${CONFIG.API_URL}/api/stats?hours=24`);
+                if (statsResponse.ok) {
+                    const stats = await statsResponse.json();
+                    updateStats(stats);
+                    updateChart(stats);
+                } else {
+                    throw new Error('Stats API not available');
+                }
+
+                // Threats
+                const threatsResponse = await fetch(`${CONFIG.API_URL}/api/threats?per_page=${CONFIG.MAX_FEED_ITEMS}`);
+                if (threatsResponse.ok) {
+                    const data = await threatsResponse.json();
+                    updateLiveFeed(data.threats);
+                    checkNewThreats(data.threats.length);
+                } else {
+                    throw new Error('Threats API not available');
+                }
+
+                updateConnectionStatus(true);
+                stopDemoMode(); // Arrêter le mode démo si on a une vraie connexion
+            } catch (error) {
+                console.error('Erreur:', error);
+                updateConnectionStatus(false);
+                // Utiliser des données de démo si l'API est inaccessible
+                useDemoData();
+            }
+        }
+
+        // Mise à jour des stats
+        function updateStats(stats) {
+            console.log('📊 Stats reçues:', stats);
+            document.getElementById('total-threats').textContent = stats.total_threats || 0;
+            document.getElementById('unique-attackers').textContent = stats.unique_attackers || 0;
+            document.getElementById('avg-risk-score').textContent = (stats.average_risk_score || 0).toFixed(1);
+            
+            // Le champ s'appelle service_distribution, pas services_targeted
+            if (stats.service_distribution && stats.service_distribution.length > 0) {
+                const topService = stats.service_distribution
+                    .sort((a, b) => b.count - a.count)[0];
+                if (topService) {
+                    document.getElementById('most-targeted').textContent = topService.service.toUpperCase();
+                }
+            }
+        }
+
+        // Mise à jour du graphique avec heures françaises
+        function updateChart(stats) {
+            if (!timelineChart) return;
+
+            // Si pas de timeline dans stats, la générer à partir des menaces ou utiliser demo
+            if (!stats.timeline || Object.keys(stats.timeline).length === 0) {
+                stats.timeline = generateDemoTimeline();
+            }
+
+            const hours = Object.keys(stats.timeline).sort();
+            const values = hours.map(h => stats.timeline[h]);
+            const labels = hours.map(h => {
+                const date = new Date(h);
+                return date.toLocaleTimeString('fr-FR', { 
+                    timeZone: 'Europe/Paris',
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            });
+
+            // S'assurer qu'on a des données
+            if (labels.length === 0 || values.length === 0) {
+                // Générer 24 heures de données vides
+                const now = new Date();
+                for (let i = 23; i >= 0; i--) {
+                    const hour = new Date(now - i * 60 * 60 * 1000);
+                    labels.push(hour.toLocaleTimeString('fr-FR', { 
+                        timeZone: 'Europe/Paris',
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    }));
+                    values.push(Math.floor(Math.random() * 10) + 1);
+                }
+            }
+
+            timelineChart.data.labels = labels;
+            timelineChart.data.datasets[0].data = values;
+            timelineChart.update('active');
+        }
+
+        // Mise à jour du live feed
+        let previousThreats = [];
+        function updateLiveFeed(threats) {
+            const container = document.getElementById('live-feed-container');
+            if (!threats || threats.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 2rem;">Aucune menace détectée</div>';
+                return;
+            }
+
+            // Détecter les nouvelles menaces
+            const newThreats = [];
+            threats.forEach(threat => {
+                const isNew = !previousThreats.find(p => 
+                    p.id === threat.id || 
+                    (p.timestamp === threat.timestamp && p.attacker_ip === threat.attacker_ip)
+                );
+                if (isNew) {
+                    newThreats.push(threat);
+                }
+            });
+
+            // Si on a de nouvelles menaces, les ajouter en haut
+            if (newThreats.length > 0) {
+                newThreats.reverse().forEach(threat => {
+                    const item = createFeedItem(threat);
+                    item.classList.add('new');
+                    item.style.animation = 'slideIn 0.5s ease, pulse 2s ease';
+                    
+                    // Insérer au début
+                    if (container.firstChild && container.firstChild.className !== 'feed-empty') {
+                        container.insertBefore(item, container.firstChild);
+                    } else {
+                        container.innerHTML = '';
+                        container.appendChild(item);
+                    }
+
+                    // Limiter le nombre d'items
+                    while (container.children.length > CONFIG.MAX_FEED_ITEMS) {
+                        container.removeChild(container.lastChild);
+                    }
+                });
+
+                // Flash pour nouvelle menace critique
+                if (newThreats.some(t => t.risk_score >= 8)) {
+                    container.style.borderColor = 'var(--danger)';
+                    setTimeout(() => {
+                        container.style.borderColor = '';
+                    }, 1000);
+                }
+            }
+
+            // Si c'est le premier chargement, afficher toutes les menaces
+            if (previousThreats.length === 0) {
+                container.innerHTML = '';
+                threats.slice(0, CONFIG.MAX_FEED_ITEMS).forEach((threat, index) => {
+                    const item = createFeedItem(threat);
+                    container.appendChild(item);
+                });
+            }
+
+            previousThreats = [...threats];
+        }
+
+        // Créer un élément de feed avec heure française
+        function createFeedItem(threat) {
+            const item = document.createElement('div');
+            item.className = 'feed-item';
+            if (threat.risk_score >= 8) {
+                item.classList.add('critical');
+            }
+
+            // Convertir l'heure en heure française
+            const threatDate = new Date(threat.timestamp);
+            const time = threatDate.toLocaleTimeString('fr-FR', {
+                timeZone: 'Europe/Paris',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            
+            const riskColor = threat.risk_score < 4 ? '#00ff88' : 
+                            threat.risk_score < 7 ? '#ffaa00' : '#ff0040';
+
+            item.innerHTML = `
+                <div class="feed-item-time">${time}</div>
+                <div class="feed-item-ip">${threat.attacker_ip}</div>
+                <div class="feed-item-service">${threat.service}</div>
+                <div class="feed-item-attack">${formatAttackType(threat.attack_type)}</div>
+                <div class="risk-score" style="background: ${riskColor}20; color: ${riskColor}">
+                    ${threat.risk_score}/10
+                </div>
+            `;
+
+            item.onclick = () => showThreatDetails(threat);
+            return item;
+        }
+
+        // Formater le type d'attaque
+        function formatAttackType(type) {
+            return type.split('_').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+
+        // Vérifier les nouvelles menaces
+        function checkNewThreats(currentCount) {
+            if (lastThreatCount > 0 && currentCount > lastThreatCount) {
+                const newThreats = currentCount - lastThreatCount;
+                showNotification(
+                    '🚨 Nouvelles menaces détectées',
+                    `${newThreats} nouvelle(s) attaque(s) détectée(s)`,
+                    'warning'
+                );
+                
+                if (soundEnabled) {
+                    playAlertSound();
+                }
+            }
+            lastThreatCount = currentCount;
+        }
+
+        // Simulation de nouvelles menaces en mode démo
+        let demoInterval = null;
+        function startDemoMode() {
+            // Ajouter une nouvelle menace toutes les 3-7 secondes
+            demoInterval = setInterval(() => {
+                const newThreat = {
+                    id: Date.now(),
+                    timestamp: new Date().toISOString(),
+                    attacker_ip: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+                    service: ['ssh', 'http', 'telnet'][Math.floor(Math.random() * 3)],
+                    attack_type: ['brute_force', 'sql_injection', 'port_scan', 'xss', 'dos_attempt'][Math.floor(Math.random() * 5)],
+                    risk_score: Math.floor(Math.random() * 10) + 1,
+                    honeypot_id: `hp-${Math.floor(Math.random() * 5) + 1}`
+                };
+
+                // Ajouter la nouvelle menace au feed
+                const threats = [newThreat, ...previousThreats].slice(0, CONFIG.MAX_FEED_ITEMS);
+                updateLiveFeed(threats);
+                
+                // Notification pour menace critique
+                if (newThreat.risk_score >= 8) {
+                    showNotification(
+                        '🚨 Menace Critique!',
+                        `${formatAttackType(newThreat.attack_type)} depuis ${newThreat.attacker_ip}`,
+                        'error'
+                    );
+                }
+            }, 3000 + Math.random() * 4000);
+        }
+
+        function stopDemoMode() {
+            if (demoInterval) {
+                clearInterval(demoInterval);
+                demoInterval = null;
+            }
+        }
+
+        // Son d'alerte
+        function playAlertSound() {
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTcJGmm98OScTgwOUajk4rRhGgU2mNn1y3ogCBh+yO/enEYDC1+z6O+oWBQNS6Pk4rJdGAUukNfyxX0tBh9+zPDhkkAIDGe68OWdTg0LUqzl4rVhHAc9lN3wy3kjBBh+yO/enEYDC1+z6O+oWBQNS6Pk4rJdGAUukNfyxX0tBh9+zPDhkkAIDGe68OWdTg0LUqzl4rVhGw');
+            audio.volume = 0.3;
+            audio.play().catch(e => console.log('Audio play failed:', e));
+        }
+
+        // Notification
+        function showNotification(title, message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <h4>${title}</h4>
+                <p>${message}</p>
+                <button onclick="this.parentElement.remove()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer;">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // Mise à jour du statut de connexion
+        function updateConnectionStatus(isOnline) {
+            const statusEl = document.getElementById('connection-status');
+            if (!statusEl) return;
+            
+            if (isOnline) {
+                statusEl.className = 'connection-status online';
+                statusEl.innerHTML = '<i class="fas fa-circle"></i><span>Connecté</span>';
+            } else {
+                statusEl.className = 'connection-status offline';
+                statusEl.innerHTML = '<i class="fas fa-circle"></i><span>Hors ligne</span>';
+            }
+        }
+
+        // Event listeners
+        function attachEventListeners() {
+            // Toggle sound
+            document.getElementById('toggle-sound')?.addEventListener('click', () => {
+                soundEnabled = !soundEnabled;
+                const btn = document.getElementById('toggle-sound');
+                btn.innerHTML = soundEnabled 
+                    ? '<i class="fas fa-volume-up"></i>' 
+                    : '<i class="fas fa-volume-mute"></i>';
+                showNotification(
+                    soundEnabled ? '🔊 Son activé' : '🔇 Son désactivé',
+                    soundEnabled ? 'Les alertes sonores sont activées' : 'Les alertes sonores sont désactivées',
+                    'info'
+                );
+            });
+
+            // Toggle theme
+            document.getElementById('toggle-theme')?.addEventListener('click', () => {
+                const html = document.documentElement;
+                const currentTheme = html.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                
+                const btn = document.getElementById('toggle-theme');
+                btn.innerHTML = newTheme === 'dark' 
+                    ? '<i class="fas fa-sun"></i>' 
+                    : '<i class="fas fa-moon"></i>';
+            });
+
+            // Export data
+            document.getElementById('export-data')?.addEventListener('click', async () => {
+                try {
+                    const response = await fetch(`${CONFIG.API_URL}/api/threats?per_page=1000`);
+                    const data = await response.json();
+                    
+                    const csv = convertToCSV(data.threats);
+                    downloadCSV(csv, 'honeypot_threats.csv');
+                    
+                    showNotification('✅ Export réussi', `${data.threats.length} menaces exportées`, 'success');
+                } catch (error) {
+                    showNotification('❌ Erreur d\'export', 'Impossible d\'exporter les données', 'error');
+                }
+            });
+
+            // Toggle fullscreen
+            document.getElementById('toggle-fullscreen')?.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            });
+
+            // Refresh data
+            document.getElementById('refresh-data')?.addEventListener('click', () => {
+                showNotification('Actualisation', 'Mise à jour des données...', 'info');
+                loadData();
+            });
+
+            // Refresh chart
+            document.getElementById('refresh-chart')?.addEventListener('click', () => {
+                loadData();
+            });
+        }
+
+        // Détails d'une menace
+        function showThreatDetails(threat) {
+            const message = `
+                IP: ${threat.attacker_ip}
+                Service: ${threat.service}
+                Type: ${formatAttackType(threat.attack_type)}
+                Risk: ${threat.risk_score}/10
+            `;
+            showNotification('Détails de la menace', message, 'info');
+        }
+
+        // CSV Export avec heures françaises
+        function convertToCSV(threats) {
+            const headers = ['Timestamp', 'IP', 'Service', 'Attack Type', 'Risk Score'];
+            const rows = threats.map(t => [
+                new Date(t.timestamp).toLocaleString('fr-FR', {
+                    timeZone: 'Europe/Paris',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                }),
+                t.attacker_ip,
+                t.service,
+                t.attack_type,
+                t.risk_score
+            ]);
+            
+            return [headers, ...rows]
+                .map(row => row.map(cell => `"${cell}"`).join(','))
+                .join('\n');
+        }
+
+        function downloadCSV(csv, filename) {
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Données de démonstration
+        function useDemoData() {
+            console.log('Mode démo activé - Génération de données pour la timeline');
+            
+            // Stats démo
+            const demoStats = {
+                total_threats: 1337,
+                unique_attackers: 42,
+                average_risk_score: 6.8,
+                service_distribution: [
+                    { service: 'ssh', count: 50 },
+                    { service: 'http', count: 30 },
+                    { service: 'telnet', count: 20 }
+                ],
+                timeline: generateDemoTimeline()
+            };
+            
+            console.log('Timeline data:', demoStats.timeline);
+            
+            updateStats(demoStats);
+            updateChart(demoStats);
+            
+            // Threats démo
+            const demoThreats = generateDemoThreats();
+            updateLiveFeed(demoThreats);
+            
+            // Démarrer la simulation de nouvelles menaces
+            startDemoMode();
+        }
+
+        function generateDemoTimeline() {
+            const timeline = {};
+            const now = new Date();
+            
+            for (let i = 23; i >= 0; i--) {
+                const hour = new Date(now - i * 60 * 60 * 1000);
+                hour.setMinutes(0);
+                hour.setSeconds(0);
+                hour.setMilliseconds(0);
+                const key = hour.toISOString().slice(0, 13) + ':00:00';
+                timeline[key] = Math.floor(Math.random() * 20) + 5;
+            }
+            
+            return timeline;
+        }
+
+        function generateDemoThreats() {
+            const threats = [];
+            const ips = ['192.168.1.100', '10.0.0.50', '172.16.0.25', '203.0.113.42', '198.51.100.14'];
+            const types = ['brute_force', 'sql_injection', 'port_scan', 'path_traversal', 'command_injection'];
+            const services = ['ssh', 'http', 'telnet'];
+            
+            // Générer des menaces avec timestamps variés
+            const now = Date.now();
+            for (let i = 0; i < 10; i++) {
+                // Temps aléatoire dans les dernières 5 minutes
+                const randomOffset = Math.floor(Math.random() * 5 * 60 * 1000);
+                threats.push({
+                    id: now - randomOffset + i, // ID unique basé sur le timestamp
+                    timestamp: new Date(now - randomOffset).toISOString(),
+                    attacker_ip: ips[Math.floor(Math.random() * ips.length)],
+                    service: services[Math.floor(Math.random() * services.length)],
+                    attack_type: types[Math.floor(Math.random() * types.length)],
+                    risk_score: Math.floor(Math.random() * 10) + 1,
+                    honeypot_id: `hp-${Math.floor(Math.random() * 5) + 1}`
+                });
+            }
+            
+            // Trier par timestamp décroissant (plus récent en premier)
+            return threats.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        }
+
+        // Charger le thème sauvegardé
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        if (savedTheme === 'light') {
+            document.getElementById('toggle-theme').innerHTML = '<i class="fas fa-moon"></i>';
+        }
+    </script>
+</body>
+</html>
