@@ -778,19 +778,10 @@ Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de
 - **Communauté open source** pour les outils utilisés
 - **Équipe de développement** pour le travail acharné
 
-## 📞 Contact
-
-- 📧 **Email** : contact@honeypot-security.com
-- 🐱 **GitHub** : https://github.com/votre-equipe/honeypot-security
-- 🌐 **Demo Live** : https://demo.honeypot-security.com
-
 ---
 
 <div align="center">
 
 **Développé par le groupe 3**
-
-[![GitHub stars](https://img.shields.io/github/stars/votre-equipe/honeypot-security?style=social)](https://github.com/votre-equipe/honeypot-security)
-[![GitHub forks](https://img.shields.io/github/forks/votre-equipe/honeypot-security?style=social)](https://github.com/votre-equipe/honeypot-security)
 
 </div>
